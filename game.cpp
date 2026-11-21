@@ -11,12 +11,41 @@ const int width = 80;
 const int height = 20;
 
 int posShipX, posShipY;
-int shotCordX, shotCordY;
 int enemyCordX[5], enemyCordY[5];
-bool shotVisible;
 int score;
 bool isGameOver;
 int enemySpeed;
+
+int fireCooldown;
+
+class shotClass {
+	public:
+		int shotCordX, shotCordY;
+		bool shotVisible;
+
+		void initShot()
+		{
+			shotCordX = 0;
+			shotCordY = 0;
+			shotVisible = false;
+		}
+
+		void fire(int startX, int startY)
+		{
+			shotCordX = startX;
+			shotCordY = startY;
+			shotVisible = true;
+		}
+
+		void moveShot()
+		{
+			shotCordX++;
+			if (shotCordX >= width)
+				shotVisible = false;
+		}
+};
+
+shotClass shot[3];
 
 void hideCursor() {
 	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -29,20 +58,23 @@ void hideCursor() {
 void gameInit()
 {
 	srand(time(0));
-
+	
+	for(int i=0; i<3; i++)
+		shot[i].initShot();
 	isGameOver = false;
 	posShipX = 10;
 	posShipY = height / 2;
-	shotCordX = 11;
-	shotCordY = height / 2;
+	
 	score = 0;
-	shotVisible = true;
+	
 	enemySpeed = 0;
 	for (int i = 0; i < 5; i++)
 	{
 		enemyCordX[i] = width + (i * 15) + (rand() % 15);
 		enemyCordY[i] = rand() % height;
 	}
+
+	fireCooldown = 0;
 
 	hideCursor();
 }
@@ -79,7 +111,9 @@ void gameRender()
 				frame += "H";
 				printed = true;
 			}
-			else if (shotVisible && i == shotCordY && j == shotCordX)
+			else if ((shot[0].shotVisible && i == shot[0].shotCordY && j == shot[0].shotCordX) ||
+				(shot[1].shotVisible && i == shot[1].shotCordY && j == shot[1].shotCordX) ||
+				(shot[2].shotVisible && i == shot[2].shotCordY && j == shot[2].shotCordX))
 			{
 				frame += "-";
 				printed = true;
@@ -116,35 +150,36 @@ void gameRender()
 
 void updateGame()
 {
+	
 
-	if (shotCordX >= width || !shotVisible && shotCordX >= width - 15)
+	for(int i=0; i<3; i++)
 	{
-		shotVisible = true;
-		shotCordX = posShipX + 1;
-		shotCordY = posShipY;
+		if (shot[i].shotVisible)
+			shot[i].moveShot();
 	}
-	else
-		shotCordX++;
 
 	enemySpeed++;
 
 	for (int enemy = 0; enemy < 5; enemy++)
 	{
 		if (enemySpeed >= 4)
-		{
 			enemyCordX[enemy]--;
-		}
-		
-		if (shotVisible && shotCordY == enemyCordY[enemy] && (shotCordX == enemyCordX[enemy] || shotCordX == enemyCordX[enemy] + 1))
+
+		for (int s = 0; s < 3; s++)
 		{
-			shotVisible = false;
-			score++;
-			enemyCordX[enemy] = width + (enemy * 15) + (rand() % 15);
-			enemyCordY[enemy] = rand() % height;
+			if (shot[s].shotVisible && shot[s].shotCordY == enemyCordY[enemy] &&
+				(shot[s].shotCordX == enemyCordX[enemy] || shot[s].shotCordX == enemyCordX[enemy] + 1))
+			{
+				shot[s].shotVisible = false;
+				score++;
+				enemyCordX[enemy] = width + (enemy * 15) + (rand() % 15);
+				enemyCordY[enemy] = rand() % height;
+			}
 		}
-		else if (enemyCordX[enemy] == 0)
+
+		if (enemyCordX[enemy] == 0)
 			isGameOver = true;
-	}	
+	}
 	
 	if (enemySpeed >= 4)
 	{
@@ -155,6 +190,8 @@ void updateGame()
 
 void userInput()
 {
+	if (fireCooldown > 0) fireCooldown--;
+
 	if (GetAsyncKeyState('A') & 0x8000) {
 		if (posShipX > 1) posShipX--;
 	}
@@ -166,6 +203,15 @@ void userInput()
 	}
 	if (GetAsyncKeyState('S') & 0x8000) {
 		if (posShipY < height - 1) posShipY++;
+	}
+	if ((GetAsyncKeyState(VK_SPACE) & 0x8000) && fireCooldown == 0) {
+		for (int i = 0; i < 3; i++) {
+			if (!shot[i].shotVisible) {
+				shot[i].fire(posShipX + 1, posShipY);
+				fireCooldown = 5;
+				break;
+			}
+		}
 	}
 	if (GetAsyncKeyState('X') & 0x8000) {
 		isGameOver = true;

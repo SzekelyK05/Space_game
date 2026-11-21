@@ -6,10 +6,8 @@ extern const int width;
 extern const int height;
 
 extern int posShipX, posShipY;
-extern int shotCordX, shotCordY;
 extern int enemyCordX[5], enemyCordY[5];
-
-extern bool shotVisible;
+extern int fireCooldown;
 
 extern int score;
 extern bool isGameOver;
