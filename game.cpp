@@ -11,41 +11,59 @@ const int width = 80;
 const int height = 20;
 
 int posShipX, posShipY;
-int enemyCordX[5], enemyCordY[5];
 int score;
 bool isGameOver;
-int enemySpeed;
 
 int fireCooldown;
 
-class shotClass {
-	public:
-		int shotCordX, shotCordY;
-		bool shotVisible;
-
-		void initShot()
-		{
-			shotCordX = 0;
-			shotCordY = 0;
-			shotVisible = false;
-		}
-
-		void fire(int startX, int startY)
-		{
-			shotCordX = startX;
-			shotCordY = startY;
-			shotVisible = true;
-		}
-
-		void moveShot()
-		{
-			shotCordX++;
-			if (shotCordX >= width)
-				shotVisible = false;
-		}
-};
 
 shotClass shot[3];
+
+void shotClass::initShot() {
+	shotCordX = 0;
+	shotCordY = 0;
+	shotVisible = false;
+}
+
+void shotClass::fire(int startX, int startY) {
+	shotCordX = startX;
+	shotCordY = startY;
+	shotVisible = true;
+}
+
+void shotClass::moveShot() {
+	shotCordX++;
+	if (shotCordX >= width)
+		shotVisible = false;
+}
+
+enemyClass enemy[5];
+
+void enemyClass::initEnemy(int i) {
+	enemySpeed = 0;
+	enemyCordX = width + (i * 15) + (rand() % 15);
+	enemyCordY = rand() % height;
+
+	step = rand() % 4 + 1;
+}
+
+
+void enemyClass::moveEnemy(int i) {
+	enemyCordX = width + (i * 15) + (rand() % 15);
+	enemyCordY = rand() % height;
+}
+
+void enemyClass::handleSpeed() {
+	
+
+	if (enemySpeed >= step)
+	{
+		enemyCordX--;
+		enemySpeed = 0;
+	}
+	else
+		enemySpeed++;
+}
 
 void hideCursor() {
 	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -67,11 +85,9 @@ void gameInit()
 	
 	score = 0;
 	
-	enemySpeed = 0;
 	for (int i = 0; i < 5; i++)
 	{
-		enemyCordX[i] = width + (i * 15) + (rand() % 15);
-		enemyCordY[i] = rand() % height;
+		enemy[i].initEnemy(i);
 	}
 
 	fireCooldown = 0;
@@ -120,9 +136,9 @@ void gameRender()
 			}
 			else
 			{
-				for (int enemy = 0; enemy < 5; enemy++)
+				for (int enemyInd = 0; enemyInd < 5; enemyInd++)
 				{
-					if (i == enemyCordY[enemy] && j == enemyCordX[enemy])
+					if (i == enemy[enemyInd].enemyCordY && j == enemy[enemyInd].enemyCordX)
 					{
 						frame += "O";
 						printed = true;
@@ -158,33 +174,27 @@ void updateGame()
 			shot[i].moveShot();
 	}
 
-	enemySpeed++;
 
-	for (int enemy = 0; enemy < 5; enemy++)
+	for (int enemyInd = 0; enemyInd < 5; enemyInd++)
 	{
-		if (enemySpeed >= 4)
-			enemyCordX[enemy]--;
+
+		enemy[enemyInd].handleSpeed();
 
 		for (int s = 0; s < 3; s++)
 		{
-			if (shot[s].shotVisible && shot[s].shotCordY == enemyCordY[enemy] &&
-				(shot[s].shotCordX == enemyCordX[enemy] || shot[s].shotCordX == enemyCordX[enemy] + 1))
+			if (shot[s].shotVisible && shot[s].shotCordY == enemy[enemyInd].enemyCordY &&
+				(shot[s].shotCordX == enemy[enemyInd].enemyCordX || shot[s].shotCordX == enemy[enemyInd].enemyCordX + 1))
 			{
 				shot[s].shotVisible = false;
 				score++;
-				enemyCordX[enemy] = width + (enemy * 15) + (rand() % 15);
-				enemyCordY[enemy] = rand() % height;
+				enemy[enemyInd].moveEnemy(enemyInd);
 			}
 		}
 
-		if (enemyCordX[enemy] == 0)
+		if (enemy[enemyInd].enemyCordX == 0)
 			isGameOver = true;
 	}
-	
-	if (enemySpeed >= 4)
-	{
-		enemySpeed = 0;
-	}
+
 
 }
 
