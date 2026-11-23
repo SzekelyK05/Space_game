@@ -6,6 +6,7 @@ A simple 2D game playable directly in your IDE's terminal. The player controls a
 Built with standard C++20 features
 Infinite game with random enemy spawns
 Smooth rendering using Windows API
+Difficulty increases with the score
 
 ## Controls
 W / A / S / D - moving
