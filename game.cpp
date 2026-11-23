@@ -9,6 +9,7 @@ using namespace std;
 
 const int width = 80;
 const int height = 20;
+const int nrEnemies = 7;
 
 int posShipX, posShipY;
 int score;
@@ -37,26 +38,31 @@ void shotClass::moveShot() {
 		shotVisible = false;
 }
 
-enemyClass enemy[5];
+enemyClass enemy[nrEnemies];
 
 void enemyClass::initEnemy(int i) {
 	enemySpeed = 0;
 	enemyCordX = width + (i * 15) + (rand() % 15);
 	enemyCordY = rand() % height;
-
-	step = rand() % 4 + 1;
+	step = rand() % 5 + 3;
 }
 
 
 void enemyClass::moveEnemy(int i) {
 	enemyCordX = width + (i * 15) + (rand() % 15);
 	enemyCordY = rand() % height;
+	enemySpeed = 0;
+	step = rand() % 5 + 3;
 }
 
 void enemyClass::handleSpeed() {
-	
+	int speedBonus = score / 10;
+	int effectiveStep = step - speedBonus;
 
-	if (enemySpeed >= step)
+	if (effectiveStep < 0)
+		effectiveStep = 0;
+
+	if (enemySpeed >= effectiveStep)
 	{
 		enemyCordX--;
 		enemySpeed = 0;
@@ -85,7 +91,7 @@ void gameInit()
 	
 	score = 0;
 	
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < nrEnemies; i++)
 	{
 		enemy[i].initEnemy(i);
 	}
@@ -136,7 +142,7 @@ void gameRender()
 			}
 			else
 			{
-				for (int enemyInd = 0; enemyInd < 5; enemyInd++)
+				for (int enemyInd = 0; enemyInd < nrEnemies; enemyInd++)
 				{
 					if (i == enemy[enemyInd].enemyCordY && j == enemy[enemyInd].enemyCordX)
 					{
@@ -175,23 +181,26 @@ void updateGame()
 	}
 
 
-	for (int enemyInd = 0; enemyInd < 5; enemyInd++)
+	for (int enemyInd = 0; enemyInd < nrEnemies; enemyInd++)
 	{
-
+		int oldEnemyX = enemy[enemyInd].enemyCordX;
 		enemy[enemyInd].handleSpeed();
 
 		for (int s = 0; s < 3; s++)
 		{
-			if (shot[s].shotVisible && shot[s].shotCordY == enemy[enemyInd].enemyCordY &&
-				(shot[s].shotCordX == enemy[enemyInd].enemyCordX || shot[s].shotCordX == enemy[enemyInd].enemyCordX + 1))
+			if (shot[s].shotVisible &&
+				shot[s].shotCordY == enemy[enemyInd].enemyCordY &&
+				shot[s].shotCordX >= enemy[enemyInd].enemyCordX &&
+				shot[s].shotCordX <= oldEnemyX + 1)
 			{
 				shot[s].shotVisible = false;
 				score++;
 				enemy[enemyInd].moveEnemy(enemyInd);
+				break;
 			}
 		}
 
-		if (enemy[enemyInd].enemyCordX == 0)
+		if (enemy[enemyInd].enemyCordX <= 0)
 			isGameOver = true;
 	}
 

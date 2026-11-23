@@ -4,6 +4,7 @@
 
 extern const int width;
 extern const int height;
+extern const int nrEnemies;
 
 extern int posShipX, posShipY;
 
